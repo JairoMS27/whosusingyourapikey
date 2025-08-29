@@ -1,57 +1,57 @@
 # API Key Usage Checker (Meme)
 
-Página web de broma (single-file) que “escanea” si alguien más está usando tu API key. La interfaz está en inglés, pero todo corre 100% en el navegador: no hay backend y nada se envía a ningún servidor (salvo cargar el CSS de Tailwind vía CDN y la imagen de avatar desde Unavatar).
+Single-file joke page that “checks” whether someone else is using your API key. Everything runs 100% in the browser: there is no backend and nothing is sent anywhere (besides loading Tailwind from a CDN and avatars from Unavatar).
 
-> Obviamente es una broma — no pegues claves reales en ninguna parte.
+> Obviously a joke — don’t paste real API keys anywhere.
 
-## Demo local
+## Run locally
 
-- Abre `index.html` en tu navegador. No necesita build ni servidor.
-- Requiere conexión para cargar Tailwind (CDN) y los avatares (Unavatar). Sin conexión, la página funciona pero se verá sin estilos y sin avatar.
+- Open `index.html` in your browser. No build or server is needed.
+- An internet connection loads Tailwind (CDN) and avatars (Unavatar). Offline, the page still works but will look unstyled and without avatars.
 
-## Características
+## Features
 
-- Validación de formato de API keys (no verificación real): OpenAI y Anthropic.
-- Simulación de escaneo con barra de progreso y resultado final.
-- Resultado aleatorio: en ocasiones “alguien más” aparece con su handle de X/Twitter y avatar.
-- Lista fija de posibles usuarios: `levelsio`, `theo`, `plbiojout`, `rauchg`, `leerob`, `shadcn`, `gnukeith`, `nicolasoulianov`.
-- Aviso flotante diminuto que aparece en una posición aleatoria al recargar la página.
+- API key format validation (not real verification): OpenAI and Anthropic.
+- Simulated scan with progress bar and final result.
+- Random result: sometimes it “finds” someone else with an X/Twitter handle and avatar.
+- Fixed list of possible users: `levelsio`, `theo`, `plbiojout`, `rauchg`, `leerob`, `shadcn`, `gnukeith`, `nicolasoulianov`.
+- Tiny floating disclaimer that appears in a random position on each page reload.
 
-## Cómo funciona
+## How it works
 
-- Todo es client-side. La clave que pegues nunca sale del navegador.
-- Se valida el patrón (formato) de la key, no su validez real. Si el formato no coincide con OpenAI/Anthropic, se muestra feedback y no se inicia el “escaneo”.
-- Si “alguien más” la usa (probabilidad configurable), se elige un usuario al azar de tu lista y se muestra su avatar (`unavatar.io`) y un link a `twitter.com/<handle>`.
+- 100% client-side. The key you paste never leaves the browser.
+- Only the pattern (format) is validated, not real authenticity. If the format isn’t OpenAI/Anthropic-like, the scan won’t start and inline feedback appears.
+- If “someone else” is detected (configurable probability), one user is picked from your list and displayed with an avatar (`unavatar.io`) and link to `twitter.com/<handle>`.
 
-## Personalización rápida
+## Quick customization
 
-- Lista de usuarios sospechosos: edita `SUSPECT_USERS` en `index.html:61`.
-- Probabilidad de “alguien más la usa”: edita `PROB_USED_BY_SOMEONE` en `index.html:63`.
-- Patrones de keys reconocidos: amplía `KEY_PATTERNS` en `index.html:65`.
-- Aviso flotante (texto/posición): elemento `#floatingNote` en `index.html:223` y script de posicionamiento justo debajo.
+- Suspects list: edit `SUSPECT_USERS` at `index.html:61`.
+- Probability for “someone else”: edit `PROB_USED_BY_SOMEONE` at `index.html:63`.
+- Recognized key patterns: extend `KEY_PATTERNS` at `index.html:65`.
+- Floating disclaimer (text/position): element `#floatingNote` at `index.html:223` and the positioning script just below it.
 
-## Validación de claves (aproximada)
+## Key validation (approximate)
 
-- OpenAI: patrones como `sk-live-…`, `sk-test-…`, `sk-proj-…`, y `sk-…` alfanumérico largo.
-- Anthropic: patrones `sk-ant-…`.
-- Para añadir otro proveedor, agrega un objeto en `KEY_PATTERNS` con tu `vendor` y una función `match(key)` con tu RegExp.
+- OpenAI: patterns like `sk-live-…`, `sk-test-…`, `sk-proj-…`, and long `sk-…` alphanumerics.
+- Anthropic: patterns `sk-ant-…`.
+- To add another provider, add an object to `KEY_PATTERNS` with a `vendor` label and `match(key)` predicate using your RegExp.
 
-## Dependencias y red
+## Dependencies & network
 
-- CSS: Tailwind vía CDN (`https://cdn.tailwindcss.com`).
-- Avatares: Unavatar (`https://unavatar.io/x/<handle>` con fallback a `https://unavatar.io/<handle>`).
-- En modo offline, la página carga pero sin estilos CDN y sin avatares.
+- CSS: Tailwind via CDN (`https://cdn.tailwindcss.com`).
+- Avatars: Unavatar (`https://unavatar.io/x/<handle>` with a fallback to `https://unavatar.io/<handle>`).
+- Offline: the page opens, but without CDN styles and avatar images.
 
-## Seguridad y privacidad
+## Safety & privacy
 
-- No pegues API keys reales. Este proyecto es humorístico.
-- El input no se envía a ninguna parte; solo vive en memoria del navegador.
-- Si quieres máxima tranquilidad, desconecta internet y abre el archivo; verás que funciona “sin red”, solo sin estilos/avatares.
+- Don’t paste real API keys. This is for laughs only.
+- The input is never sent anywhere; it lives only in browser memory.
+- For extra peace of mind, disconnect from the internet and open the file; it still runs (just unstyled and no avatars).
 
-## Créditos
+## Credits
 
-- Tailwind CSS (CDN).
-- Unavatar para las imágenes de perfil.
+- Tailwind CSS (CDN)
+- Unavatar for profile images
 
 ---
 
