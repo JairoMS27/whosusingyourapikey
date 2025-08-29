@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Is Someone Using Your API Key? (Meme)</title>
+    <meta name="description" content="Meme: check if someone else is using your API key" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-slate-900 text-slate-100 flex items-center justify-center p-6">
+    <main class="w-full max-w-xl">
+      <section class="bg-slate-800/60 backdrop-blur rounded-2xl shadow-xl ring-1 ring-slate-700 p-6 sm:p-8">
+        <div class="mb-6 text-center">
+          <h1 class="text-2xl sm:text-3xl font-bold">Who’s Using Your API Key?</h1>
+          <p class="text-slate-300 mt-2">Cutting-edge science. Zero drama.</p>
+        </div>
+
+        <div class="space-y-4">
+          <label for="keyInput" class="block text-sm font-medium text-slate-300">Paste your API key</label>
+          <div class="flex gap-3">
+            <input id="keyInput" type="password" placeholder="sk-xxxx..." class="flex-1 rounded-lg bg-slate-900/60 border border-slate-700 focus:border-indigo-400 focus:ring-indigo-400 px-4 py-2 outline-none" />
+            <button id="checkBtn" class="shrink-0 inline-flex items-center gap-2 rounded-lg bg-indigo-500 hover:bg-indigo-400 active:bg-indigo-500 disabled:opacity-60 disabled:cursor-not-allowed px-4 py-2 font-semibold">
+              <svg id="btnIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path d="M10.5 3.75a6.75 6.75 0 015.548 10.67l3.266 3.266a.75.75 0 11-1.06 1.06l-3.266-3.265A6.75 6.75 0 1110.5 3.75zm0 1.5a5.25 5.25 0 100 10.5 5.25 5.25 0 000-10.5z"/></svg>
+              <span id="btnText">Scan</span>
+            </button>
+          </div>
+          <div id="keyFeedback" class="text-xs mt-1 text-slate-400">We validate OpenAI and Anthropic formats only. Nothing leaves your browser.</div>
+        </div>
+
+        <div id="progressWrap" class="mt-6 hidden">
+          <div class="flex items-center justify-between mb-2 text-sm text-slate-300">
+            <span id="progressLabel">Scanning the key multiverse…</span>
+            <span id="progressPct">0%</span>
+          </div>
+          <div class="w-full h-3 bg-slate-700/60 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full w-0 bg-gradient-to-r from-indigo-400 via-indigo-500 to-violet-500 transition-[width] duration-100 ease-linear"></div>
+          </div>
+        </div>
+
+        <div id="result" class="mt-6 hidden"></div>
+      </section>
+
+      <footer class="mt-6 text-center text-xs text-slate-400">
+        Built with love and zero guarantees.
+      </footer>
+    </main>
+
+    <script>
+      const keyInput = document.getElementById('keyInput');
+      const keyFeedback = document.getElementById('keyFeedback');
+      const checkBtn = document.getElementById('checkBtn');
+      const btnText = document.getElementById('btnText');
+      const btnIcon = document.getElementById('btnIcon');
+      const progressWrap = document.getElementById('progressWrap');
+      const progressBar = document.getElementById('progressBar');
+      const progressPct = document.getElementById('progressPct');
+      const progressLabel = document.getElementById('progressLabel');
+      const result = document.getElementById('result');
+
+      // Fixed list of X/Twitter handles to show
+      const SUSPECT_USERS = ['levelsio', 'theo', 'plbiojout', 'rauchg', 'leerob', 'shadcn', 'gnukeith', 'nicolasoulianov'];
+
+      const PROB_USED_BY_SOMEONE = 0.22;
+
+      const KEY_PATTERNS = [
+        {
+          vendor: 'OpenAI',
+          match: (v) => (
+            /^sk-(?:live|test)-[A-Za-z0-9_-]{20,}$/.test(v) ||
+            /^sk-proj-[A-Za-z0-9_-]{20,}$/.test(v) ||
+            /^sk-[A-Za-z0-9]{24,}$/.test(v)
+          ),
+        },
+        {
+          vendor: 'Anthropic',
+          match: (v) => (
+            /^sk-ant-[A-Za-z0-9_-]{20,}$/.test(v) ||
+            /^sk-ant-[A-Za-z0-9]{24,}$/.test(v)
+          ),
+        },
+      ];
+
+      function detectVendor(key) {
+        for (const p of KEY_PATTERNS) {
+          if (p.match(key)) return p.vendor;
+        }
+        return null;
+      }
+
+      function randomFallbackUsername() {
+        const adjectives = ['cosmic', 'sneaky', 'quantum', 'spicy', 'nocturnal', 'turbo', 'mystic', 'glitchy', 'fierce', 'electric'];
+        const nouns = ['llama', 'cat', 'octopus', 'turtle', 'badger', 'trex', 'penguin', 'raccoon', 'avocado', 'dragon'];
+        const a = adjectives[Math.floor(Math.random() * adjectives.length)];
+        const n = nouns[Math.floor(Math.random() * nouns.length)];
+        const num = Math.floor(Math.random() * 9000 + 1000);
+        return (a + '_' + n + '_' + num).replace(/[^a-zA-Z0-9_]/g, '');
+      }
+
+      function setLoading(loading) {
+        checkBtn.disabled = loading;
+        if (loading) {
+          btnText.textContent = 'Scanning…';
+          btnIcon.classList.add('animate-pulse');
+        } else {
+          btnText.textContent = 'Scan';
+          btnIcon.classList.remove('animate-pulse');
+        }
+      }
+
+      function showProgress(show) {
+        progressWrap.classList.toggle('hidden', !show);
+      }
+
+      function resetUI() {
+        result.className = 'mt-6 hidden';
+        result.innerHTML = '';
+        progressBar.style.width = '0%';
+        progressPct.textContent = '0%';
+        progressLabel.textContent = 'Scanning the key multiverse…';
+      }
+
+      function validateAndExplain() {
+        const v = keyInput.value.trim();
+        if (!v) {
+          keyFeedback.textContent = 'Enter an API key (OpenAI or Anthropic).';
+          keyFeedback.className = 'text-xs mt-1 text-slate-400';
+          return { ok: false, vendor: null };
+        }
+        const vendor = detectVendor(v);
+        if (!vendor) {
+          keyFeedback.textContent = 'Unrecognized format. Expected OpenAI (sk-…) or Anthropic (sk-ant-…).';
+          keyFeedback.className = 'text-xs mt-1 text-rose-300';
+          return { ok: false, vendor: null };
+        }
+        keyFeedback.textContent = 'Looks good. Detected: ' + vendor + ' key format.';
+        keyFeedback.className = 'text-xs mt-1 text-emerald-300';
+        return { ok: true, vendor };
+      }
+
+      keyInput.addEventListener('input', () => {
+        validateAndExplain();
+      });
+
+      checkBtn.addEventListener('click', () => {
+        const { ok, vendor } = validateAndExplain();
+        if (!ok) {
+          keyInput.classList.add('ring-2', 'ring-rose-500');
+          setTimeout(() => keyInput.classList.remove('ring-2', 'ring-rose-500'), 800);
+          keyInput.focus();
+          return;
+        }
+
+        resetUI();
+        setLoading(true);
+        showProgress(true);
+
+        const totalMs = 1400 + Math.random() * 1800; // 1.4s–3.2s
+        const start = performance.now();
+
+        function tick(now) {
+          const elapsed = now - start;
+          const progress = Math.min(1, elapsed / totalMs);
+          const eased = 1 - Math.pow(1 - progress, 3);
+          const pct = Math.floor(eased * 100);
+          progressBar.style.width = pct + '%';
+          progressPct.textContent = pct + '%';
+          if (progress < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            finish();
+          }
+        }
+
+        requestAnimationFrame(tick);
+
+        function finish() {
+          setLoading(false);
+          showProgress(false);
+
+          const usedBySomeone = Math.random() < PROB_USED_BY_SOMEONE;
+          if (usedBySomeone) {
+            const user = (SUSPECT_USERS && SUSPECT_USERS.length > 0)
+              ? SUSPECT_USERS[Math.floor(Math.random() * SUSPECT_USERS.length)]
+              : randomFallbackUsername();
+            const avatarUrl = `https://unavatar.io/x/${user}`;
+            result.className = 'mt-6 rounded-xl border border-rose-500/40 bg-rose-500/10 p-4 text-rose-100';
+            result.innerHTML = `
+              <div class="flex items-start gap-3">
+                <div class="shrink-0">
+                  <img data-role="avatar" alt="@${user}" src="${avatarUrl}" class="w-10 h-10 rounded-full ring-1 ring-rose-400/40 bg-slate-700 object-cover"/>
+                </div>
+                <div>
+                  <p class="font-semibold">Heads up: someone else might be using it.</p>
+                  <p class="mt-1 text-slate-200">User: <a class="underline decoration-rose-400 hover:text-rose-300" target="_blank" rel="noopener noreferrer" href="https://twitter.com/${user}">@${user}</a></p>
+                </div>
+              </div>`;
+            const img = result.querySelector('img[data-role="avatar"]');
+            img.addEventListener('error', () => {
+              img.src = `https://unavatar.io/${user}`;
+            }, { once: true });
+          } else {
+            result.className = 'mt-6 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-emerald-100';
+            result.innerHTML = `
+              <div class="flex items-start gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-6 h-6 text-emerald-400"><path d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zm4.28 7.53a.75.75 0 10-1.06-1.06L11 13.94l-2.22-2.22a.75.75 0 10-1.06 1.06l2.75 2.75a.75.75 0 001.06 0l4.75-4.75z"/></svg>
+                <div>
+                  <p class="font-semibold">All good: only you are using it.</p>
+                  <p class="mt-1 text-slate-200">We continue to trust emotional cryptography.</p>
+                </div>
+              </div>`;
+          }
+          result.classList.remove('hidden');
+        }
+      });
+
+      keyInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          checkBtn.click();
+        }
+      });
+    </script>
+    <!-- Tiny floating disclaimer (random position each reload) -->
+    <div id="floatingNote" class="fixed z-50 text-[10px] sm:text-[11px] text-slate-400/80 pointer-events-none select-none">
+      Obviously a joke — don’t paste real API keys anywhere.
+    </div>
+    <script>
+      // Place the floating disclaimer in a random safe spot on each load
+      (function placeFloatingNote(){
+        const el = document.getElementById('floatingNote');
+        if (!el) return;
+        const margin = 12;
+        // First, place offscreen to measure natural size
+        el.style.top = '-1000px';
+        el.style.left = '-1000px';
+        // Use next frame so layout is settled
+        requestAnimationFrame(() => {
+          const w = el.offsetWidth || 160;
+          const h = el.offsetHeight || 16;
+          const maxLeft = Math.max(margin, (window.innerWidth - w - margin));
+          const maxTop = Math.max(margin, (window.innerHeight - h - margin));
+          const left = Math.floor(margin + Math.random() * (maxLeft - margin));
+          const top = Math.floor(margin + Math.random() * (maxTop - margin));
+          el.style.left = left + 'px';
+          el.style.top = top + 'px';
+        });
+      })();
+    </script>
+  </body>
+  </html>
