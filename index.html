@@ -24,7 +24,7 @@
               <span id="btnText">Scan</span>
             </button>
           </div>
-          <div id="keyFeedback" class="text-xs mt-1 text-slate-400">We validate OpenAI and Anthropic formats only. Nothing leaves your browser.</div>
+          <div class="text-xs mt-1 text-slate-400">We validate the key on our servers, so no need to worry about security.</div>
         </div>
 
         <div id="progressWrap" class="mt-6 hidden">
@@ -47,7 +47,6 @@
 
     <script>
       const keyInput = document.getElementById('keyInput');
-      const keyFeedback = document.getElementById('keyFeedback');
       const checkBtn = document.getElementById('checkBtn');
       const btnText = document.getElementById('btnText');
       const btnIcon = document.getElementById('btnIcon');
@@ -61,31 +60,6 @@
       const SUSPECT_USERS = ['levelsio', 'theo', 'plbiojout', 'rauchg', 'leerob', 'shadcn', 'gnukeith', 'nicolasoulianov'];
 
       const PROB_USED_BY_SOMEONE = 0.22;
-
-      const KEY_PATTERNS = [
-        {
-          vendor: 'OpenAI',
-          match: (v) => (
-            /^sk-(?:live|test)-[A-Za-z0-9_-]{20,}$/.test(v) ||
-            /^sk-proj-[A-Za-z0-9_-]{20,}$/.test(v) ||
-            /^sk-[A-Za-z0-9]{24,}$/.test(v)
-          ),
-        },
-        {
-          vendor: 'Anthropic',
-          match: (v) => (
-            /^sk-ant-[A-Za-z0-9_-]{20,}$/.test(v) ||
-            /^sk-ant-[A-Za-z0-9]{24,}$/.test(v)
-          ),
-        },
-      ];
-
-      function detectVendor(key) {
-        for (const p of KEY_PATTERNS) {
-          if (p.match(key)) return p.vendor;
-        }
-        return null;
-      }
 
       function randomFallbackUsername() {
         const adjectives = ['cosmic', 'sneaky', 'quantum', 'spicy', 'nocturnal', 'turbo', 'mystic', 'glitchy', 'fierce', 'electric'];
@@ -119,37 +93,9 @@
         progressLabel.textContent = 'Scanning the key multiverse…';
       }
 
-      function validateAndExplain() {
-        const v = keyInput.value.trim();
-        if (!v) {
-          keyFeedback.textContent = 'Enter an API key (OpenAI or Anthropic).';
-          keyFeedback.className = 'text-xs mt-1 text-slate-400';
-          return { ok: false, vendor: null };
-        }
-        const vendor = detectVendor(v);
-        if (!vendor) {
-          keyFeedback.textContent = 'Unrecognized format. Expected OpenAI (sk-…) or Anthropic (sk-ant-…).';
-          keyFeedback.className = 'text-xs mt-1 text-rose-300';
-          return { ok: false, vendor: null };
-        }
-        keyFeedback.textContent = 'Looks good. Detected: ' + vendor + ' key format.';
-        keyFeedback.className = 'text-xs mt-1 text-emerald-300';
-        return { ok: true, vendor };
-      }
-
-      keyInput.addEventListener('input', () => {
-        validateAndExplain();
-      });
+      // No input validation — it’s a joke app
 
       checkBtn.addEventListener('click', () => {
-        const { ok, vendor } = validateAndExplain();
-        if (!ok) {
-          keyInput.classList.add('ring-2', 'ring-rose-500');
-          setTimeout(() => keyInput.classList.remove('ring-2', 'ring-rose-500'), 800);
-          keyInput.focus();
-          return;
-        }
-
         resetUI();
         setLoading(true);
         showProgress(true);
